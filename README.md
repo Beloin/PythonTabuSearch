@@ -33,7 +33,9 @@ Roteamento de Veículos, Caixeiro viajante, Mochila, Otimização Combinatória.
     - Para solucionar a ideia é criar uma lista de movimentos reversos.
     - Porém isso traz outro problema, uma lista de movimentos é muito restritiva.
 
-## Critérios de Aceitação
+## Critérios de Aceitação do Movimento
+
+Os critérios de busca tem como base a busca de minimização, então devemos manter ciência ao usar os algoritmos de comparação.
 
 - Retirar o **status** Tabu de um movimento sobdeterminadas circunstâncias.
 - Aceitar um movimento, mesmo que tabu, se ele melhorar o valor da função objetivo global.
@@ -44,7 +46,15 @@ Roteamento de Veículos, Caixeiro viajante, Mochila, Otimização Combinatória.
 - A lista salva os últimos N movimentos em uma lista T. Fila de tamanho fixo, onde ao entrar um o último saí.
 - Sendo assim, ao pesquisar na lista dos vizinhos, o vizinho que tiver seu movimento na lista Tabu, deverá sair da consulta.
 - Porém com os tabus, a pesquisa pode acabar não indo para outros pontos de interesse, tendo uma busca prematura.
-- Para solucionar isso, Há a chamada "Função Aspiração", um mecanismo que ajuda a retirar sob algumas circuntâncias o status tabu de um movimento.
+- Para solucionar isso, Há a chamada "Função Aspiração", um mecanismo que ajuda a retirar sob algumas circuntâncias o status tabu de um movimento, para que ele possa ser revisitado.
+- Nível de aspiração A(V): uma solução S' em V pode ser gerada se f(S') < A(f(s)), independente se o movimento escolhido dentro de V estiver já na lista de tabu.
+- Um bom exemplo é caso a aspiração seja A(f(s)) = f(s*), sendo "s*" a melhor solução encontrada até então.
+
+## Critério de Parada
+
+- Número Máximo de interações
+- Valor da melhor solução chega proximo de um threshold
+
 
 # Recursos
 
