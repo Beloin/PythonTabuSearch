@@ -2,6 +2,7 @@ import math
 import random
 from collections import deque
 from heapq import heappush, heappop
+from typing import Union
 
 cities = [
     "FORTALEZA",
@@ -58,16 +59,21 @@ NGB_SIZE: int
 BEST_S: CostAndState = math.inf, []
 
 
-def tabu_search(iterations: int = 10_000, neighborhood_size: int = 10, threshold=1, queue_len=10):
+def tabu_search(iterations: int = 10_000, neighborhood_size: int = 10, threshold=1, queue_len=10,
+                rep: Union[int, float, None] = 100):
     global NGB_SIZE, BEST_S
     NGB_SIZE = neighborhood_size
 
     curr_s: CostAndState = gen_fisrt()  # Current is allways the best in the neighborhood
     tabu_queue: deque[CostAndState] = deque(maxlen=queue_len)
 
+    if rep is None:
+        rep = math.inf
+
+    l_best = BEST_S
     repetead = 0
     i = 0
-    while i <= iterations and repetead <= 20:
+    while i < iterations and repetead < rep:
         i += 1
         tabu_queue.append(curr_s)
 
@@ -81,15 +87,22 @@ def tabu_search(iterations: int = 10_000, neighborhood_size: int = 10, threshold
         if len(neighborhood) > 0:
             curr_s = c
 
-        if test_threshold(curr_s[0], BEST_S[0], threshold):
+        if test_threshold(l_best[0], BEST_S[0], threshold):
             repetead += 1
+        else:
+            repetead = 0
+
+        l_best = BEST_S
 
         if curr_s[0] < BEST_S[0]:
             BEST_S = curr_s
 
+    print(f"Reached: {i} iterations and {repetead} Repetitions")
+
 
 def test_threshold(c1: float, c2: float, threshold: float):
-    return c1 - c2 <= threshold
+    fabs = math.fabs(c1 - c2)
+    return fabs <= threshold
 
 
 def is_tabu(state: CostAndState, tabu_queue: deque[CostAndState]):
@@ -145,9 +158,10 @@ def get_neighborhood(state) -> list[CostAndState]:
     return heap
 
 
-def pretty_print(path: list[int]):
-    print('Path:\n\t', end='')
-    for index in path:
+def pretty_print(path: CostAndState):
+    print(f'Path: ({path[0]})\n\t', end='')
+    print(cities[0] + ' -> ', end='')
+    for index in path[1]:
         print(cities[index] + ' -> ', end='')
 
     print(cities[0])
@@ -155,5 +169,5 @@ def pretty_print(path: list[int]):
 
 if __name__ == '__main__':
     random_gen = random.Random(1)
-    tabu_search()
-    pretty_print(BEST_S[1])
+    tabu_search(rep=4000)
+    pretty_print(BEST_S)
