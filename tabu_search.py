@@ -1,5 +1,7 @@
 import math
+import random
 from collections import deque
+from heapq import heappush, heappop
 
 cities = [
     "FORTALEZA",
@@ -49,19 +51,18 @@ costs = [
 
 # The 'S' state will be an Array of Indexes
 
-NGB_SIZE: int
-
+# TODO; Maybe generate a class and a unique hashcode for each array
 CostAndState = tuple[float, list[int]]
 
+NGB_SIZE: int
+BEST_S: CostAndState = math.inf, []
 
-def tabu_search(iterations: int = 1000, neighborhood_size: int = 10, threshold=1, queue_len=10):
-    global NGB_SIZE
+
+def tabu_search(iterations: int = 10_000, neighborhood_size: int = 10, threshold=1, queue_len=10):
+    global NGB_SIZE, BEST_S
     NGB_SIZE = neighborhood_size
 
-    best_s: CostAndState = -math.inf, []
-
-    # TODO: Create fisrt State
-    curr_s: CostAndState
+    curr_s: CostAndState = gen_fisrt()  # Current is allways the best in the neighborhood
     tabu_queue: deque[CostAndState] = deque(maxlen=queue_len)
 
     repetead = 0
@@ -70,10 +71,21 @@ def tabu_search(iterations: int = 1000, neighborhood_size: int = 10, threshold=1
         i += 1
         tabu_queue.append(curr_s)
 
-        get_neighborhood(curr_s)
+        # The neighborhood is already in a heap.
+        neighborhood: list[CostAndState] = get_neighborhood(curr_s)
 
-        if test_threshold(curr_s[0], best_s[0], threshold):
+        c = heappop(neighborhood)
+        while is_tabu(c, tabu_queue) and len(neighborhood) > 0:
+            c = heappop(neighborhood)
+
+        if len(neighborhood) > 0:
+            curr_s = c
+
+        if test_threshold(curr_s[0], BEST_S[0], threshold):
             repetead += 1
+
+        if curr_s[0] < BEST_S[0]:
+            BEST_S = curr_s
 
 
 def test_threshold(c1: float, c2: float, threshold: float):
@@ -81,13 +93,20 @@ def test_threshold(c1: float, c2: float, threshold: float):
 
 
 def is_tabu(state: CostAndState, tabu_queue: deque[CostAndState]):
-    pass
+    return (state in tabu_queue) and (not aceptance_of_s(state))
 
 
 def aceptance_of_s(state: CostAndState):
-    pass
+    return BEST_S[0] > state[0]
 
 
+def gen_fisrt() -> CostAndState:
+    amount = len(cities) - 1
+    sample = random_gen.sample([i + 1 for i in range(amount)], amount)
+    return fitness(sample), sample
+
+
+# The state list will be acounted without first state
 def fitness(state: list[int], invert=False) -> float:
     global costs
     prev = 0
@@ -100,9 +119,41 @@ def fitness(state: list[int], invert=False) -> float:
     return total_cost if invert is False else -total_cost
 
 
-def get_neighborhood():
-    pass
+def get_neighborhood(state) -> list[CostAndState]:
+    global NGB_SIZE
+    heap = []
+
+    for i in range(NGB_SIZE):
+        node1 = 0
+        node2 = 0
+
+        while node1 == node2:
+            amount = len(state[1]) - 1
+            node1 = random_gen.randint(1, amount)
+            node2 = random_gen.randint(1, amount)
+
+        if node1 > node2:
+            swap = node1
+            node1 = node2
+            node2 = swap
+
+        tmp = state[1][node1:node2]
+        tmp_state = state[1][0:node1] + tmp[::-1] + state[1][node2:]  # Without fisrt city
+
+        heappush(heap, (fitness(tmp_state), tmp_state))
+
+    return heap
+
+
+def pretty_print(path: list[int]):
+    print('Path:\n\t', end='')
+    for index in path:
+        print(cities[index] + ' -> ', end='')
+
+    print(cities[0])
 
 
 if __name__ == '__main__':
-    pass
+    random_gen = random.Random(1)
+    tabu_search()
+    pretty_print(BEST_S[1])
